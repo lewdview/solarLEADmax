@@ -14,6 +14,8 @@ const EnvSchema = z.object({
   CORS_ORIGIN: z.string().default("*"),
   JWT_SECRET: z.string().default("changeme"),
   MAILGUN_API_KEY: z.string().optional(),
+  MAILGUN_DOMAIN: z.string().optional(),
+  EMAIL_FROM: z.string().email().optional(),
   SENDGRID_API_KEY: z.string().optional(),
   GOOGLE_MAPS_API_KEY: z.string().optional(),
 });

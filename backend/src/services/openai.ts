@@ -319,6 +319,12 @@ async function handleQualifyLead(
   if (calculatedScore >= 8 && is_homeowner) {
     // AI should automatically offer booking in its response
     logger.info({ msg: "Hot lead detected - booking flow recommended", leadId });
+    try {
+      const { initiateHotLeadCall } = await import("./twilio.js");
+      await initiateHotLeadCall(leadId);
+    } catch (err) {
+      logger.error({ msg: "Failed to initiate hot lead call", leadId, err });
+    }
   }
 }
 
