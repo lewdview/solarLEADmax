@@ -1,0 +1,302 @@
+{
+  "name": "solarLEADmax: Follow-Up Sequence",
+  "nodes": [
+    {
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "field": "hours",
+              "hoursInterval": 2
+            }
+          ]
+        }
+      },
+      "id": "cron-trigger",
+      "name": "Every 2 Hours",
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1,
+      "position": [250, 450]
+    },
+    {
+      "parameters": {
+        "url": "={{$env.BACKEND_API_URL}}/api/leads",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "sendQuery": true,
+        "queryParameters": {
+          "parameters": [
+            {
+              "name": "status",
+              "value": "new,contacted,interested,qualified"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "fetch-active-leads",
+      "name": "Fetch Active Leads",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 3,
+      "position": [450, 450]
+    },
+    {
+      "parameters": {
+        "functionCode": "// Determine which leads need follow-up based on last_contact timestamp\nconst leads = $input.item.json.leads || [];\nconst now = new Date();\nconst results = [];\n\nfor (const lead of leads) {\n  if (!lead.last_contact) continue;\n  \n  const lastContact = new Date(lead.last_contact);\n  const hoursSince = (now - lastContact) / (1000 * 60 * 60);\n  \n  let followUpType = null;\n  \n  // Day 1 follow-up (24 hours)\n  if (hoursSince >= 24 && hoursSince < 26 && lead.status === 'new') {\n    followUpType = 'day1';\n  }\n  // Day 3 follow-up (72 hours)\n  else if (hoursSince >= 72 && hoursSince < 74 && (lead.status === 'new' || lead.status === 'contacted')) {\n    followUpType = 'day3';\n  }\n  // Day 7 follow-up (168 hours)\n  else if (hoursSince >= 168 && hoursSince < 170 && lead.status !== 'dead' && lead.status !== 'booked') {\n    followUpType = 'day7';\n  }\n  \n  if (followUpType) {\n    results.push({\n      json: {\n        ...lead,\n        followUpType,\n        hoursSinceContact: Math.floor(hoursSince)\n      }\n    });\n  }\n}\n\nreturn results;"
+      },
+      "id": "filter-leads",
+      "name": "Filter Leads Needing Follow-Up",
+      "type": "n8n-nodes-base.function",
+      "typeVersion": 1,
+      "position": [650, 450]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "string": [
+            {
+              "value1": "={{$json.followUpType}}",
+              "operation": "equals",
+              "value2": "day1"
+            }
+          ]
+        }
+      },
+      "id": "route-day1",
+      "name": "Day 1 Follow-Up?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 1,
+      "position": [850, 350]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "string": [
+            {
+              "value1": "={{$json.followUpType}}",
+              "operation": "equals",
+              "value2": "day3"
+            }
+          ]
+        }
+      },
+      "id": "route-day3",
+      "name": "Day 3 Follow-Up?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 1,
+      "position": [850, 550]
+    },
+    {
+      "parameters": {
+        "fromEmail": "={{$env.EMAIL_FROM}}",
+        "toEmail": "={{$json.email}}",
+        "subject": "Still interested in solar for your home?",
+        "text": "Hi {{$json.name}},\n\nI wanted to follow up on our previous conversation about solar for your {{$json.address}} property.\n\nQuick question - are you the homeowner?\n\nReply YES to continue or STOP to opt out.\n\nBest,\nSOLAI - Solar Lead AI",
+        "options": {}
+      },
+      "id": "day1-sms",
+      "name": "Day 1 SMS",
+      "type": "n8n-nodes-base.twilio",
+      "typeVersion": 1,
+      "position": [1050, 250],
+      "credentials": {
+        "twilioApi": {
+          "id": "twilioCredentials",
+          "name": "Twilio Credentials"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "functionCode": "// Prepare educational email content\nconst lead = $input.item.json;\n\nreturn {\n  json: {\n    lead_id: lead.id,\n    email: lead.email,\n    name: lead.name,\n    emailType: 'educational'\n  }\n};"
+      },
+      "id": "day3-prep",
+      "name": "Prepare Educational Email",
+      "type": "n8n-nodes-base.function",
+      "typeVersion": 1,
+      "position": [1050, 550]
+    },
+    {
+      "parameters": {
+        "url": "={{$env.BACKEND_API_URL}}/api/leads/{{$json.lead_id}}/send-email",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "sendBody": true,
+        "bodyParameters": {
+          "parameters": [
+            {
+              "name": "type",
+              "value": "={{$json.emailType}}"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "day3-send-email",
+      "name": "Send Educational Email",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 3,
+      "position": [1250, 550]
+    },
+    {
+      "parameters": {
+        "functionCode": "// Prepare final CTA email/SMS\nconst lead = $input.item.json;\n\nreturn {\n  json: {\n    lead_id: lead.id,\n    phone: lead.phone,\n    name: lead.name,\n    emailType: 'final_cta'\n  }\n};"
+      },
+      "id": "day7-prep",
+      "name": "Prepare Final CTA",
+      "type": "n8n-nodes-base.function",
+      "typeVersion": 1,
+      "position": [1050, 750]
+    },
+    {
+      "parameters": {
+        "fromEmail": "={{$env.EMAIL_FROM}}",
+        "toEmail": "={{$json.phone}}",
+        "subject": "Last chance: Lock in your solar savings",
+        "text": "{{$json.name}}, this is your final reminder.\n\nSolar incentives are decreasing. Don't miss out on thousands in savings.\n\nReply BOOK to schedule your free consultation now.\n\nReply STOP to opt out.\n\n- SOLAI Team",
+        "options": {}
+      },
+      "id": "day7-sms",
+      "name": "Day 7 SMS",
+      "type": "n8n-nodes-base.twilio",
+      "typeVersion": 1,
+      "position": [1250, 750],
+      "credentials": {
+        "twilioApi": {
+          "id": "twilioCredentials",
+          "name": "Twilio Credentials"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "url": "={{$env.BACKEND_API_URL}}/api/leads/{{$json.lead_id}}/send-email",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "sendBody": true,
+        "bodyParameters": {
+          "parameters": [
+            {
+              "name": "type",
+              "value": "={{$json.emailType}}"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "day7-send-email",
+      "name": "Send Final CTA Email",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 3,
+      "position": [1450, 750]
+    }
+  ],
+  "connections": {
+    "Every 2 Hours": {
+      "main": [
+        [
+          {
+            "node": "Fetch Active Leads",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Fetch Active Leads": {
+      "main": [
+        [
+          {
+            "node": "Filter Leads Needing Follow-Up",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Filter Leads Needing Follow-Up": {
+      "main": [
+        [
+          {
+            "node": "Day 1 Follow-Up?",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Day 3 Follow-Up?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Day 1 Follow-Up?": {
+      "main": [
+        [
+          {
+            "node": "Day 1 SMS",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Day 3 Follow-Up?": {
+      "main": [
+        [
+          {
+            "node": "Prepare Educational Email",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Prepare Final CTA",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Prepare Educational Email": {
+      "main": [
+        [
+          {
+            "node": "Send Educational Email",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Prepare Final CTA": {
+      "main": [
+        [
+          {
+            "node": "Day 7 SMS",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Day 7 SMS": {
+      "main": [
+        [
+          {
+            "node": "Send Final CTA Email",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "settings": {
+    "saveDataErrorExecution": "all",
+    "saveDataSuccessExecution": "all",
+    "saveManualExecutions": true
+  },
+  "tags": ["solarLEADmax", "follow-up", "nurture"]
+}

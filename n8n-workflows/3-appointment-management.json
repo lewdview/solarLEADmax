@@ -1,0 +1,483 @@
+{
+  "name": "solarLEADmax: Appointment Booking & Management",
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "book-appointment",
+        "responseMode": "responseNode",
+        "options": {}
+      },
+      "id": "webhook-trigger",
+      "name": "Booking Request Webhook",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 1,
+      "position": [250, 450],
+      "webhookId": "appointment-booking-webhook"
+    },
+    {
+      "parameters": {
+        "functionCode": "// Extract lead_id and optional time_slot from webhook\nconst body = $input.item.json.body;\n\nif (!body.lead_id) {\n  throw new Error('Missing required field: lead_id');\n}\n\nreturn {\n  json: {\n    lead_id: body.lead_id,\n    requested_slot: body.time_slot || null,\n    event_type_uuid: body.event_type_uuid || null\n  }\n};"
+      },
+      "id": "validate-request",
+      "name": "Validate Request",
+      "type": "n8n-nodes-base.function",
+      "typeVersion": 1,
+      "position": [450, 450]
+    },
+    {
+      "parameters": {
+        "url": "={{$env.BACKEND_API_URL}}/api/leads/={{$json.lead_id}}",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "options": {}
+      },
+      "id": "fetch-lead",
+      "name": "Fetch Lead Details",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 3,
+      "position": [650, 450]
+    },
+    {
+      "parameters": {
+        "url": "https://api.calendly.com/event_types",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Authorization",
+              "value": "Bearer {{$env.CALENDLY_ACCESS_TOKEN}}"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "fetch-event-types",
+      "name": "Fetch Calendly Event Types",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 3,
+      "position": [850, 450]
+    },
+    {
+      "parameters": {
+        "functionCode": "// Extract the first event type (or use provided UUID)\nconst requestedUuid = $input.first().json.event_type_uuid;\nconst eventTypes = $input.item.json.collection || [];\n\nlet eventType;\nif (requestedUuid) {\n  eventType = eventTypes.find(et => et.uri.includes(requestedUuid));\n} else {\n  eventType = eventTypes[0];\n}\n\nif (!eventType) {\n  throw new Error('No Calendly event types found');\n}\n\nconst lead = $input.first().json.lead || $input.first().json;\n\nreturn {\n  json: {\n    lead_id: lead.id,\n    lead_name: lead.name,\n    lead_email: lead.email,\n    lead_phone: lead.phone,\n    event_type_uri: eventType.uri,\n    event_type_name: eventType.name,\n    scheduling_url: eventType.scheduling_url\n  }\n};"
+      },
+      "id": "prepare-booking",
+      "name": "Prepare Booking Data",
+      "type": "n8n-nodes-base.function",
+      "typeVersion": 1,
+      "position": [1050, 450]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "string": [
+            {
+              "value1": "={{$json.lead_email}}",
+              "operation": "isNotEmpty"
+            }
+          ]
+        }
+      },
+      "id": "check-email",
+      "name": "Has Email?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 1,
+      "position": [1250, 450]
+    },
+    {
+      "parameters": {
+        "url": "https://api.calendly.com/scheduling_links",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Authorization",
+              "value": "Bearer {{$env.CALENDLY_ACCESS_TOKEN}}"
+            },
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            }
+          ]
+        },
+        "sendBody": true,
+        "bodyParameters": {
+          "parameters": [
+            {
+              "name": "max_event_count",
+              "value": "1"
+            },
+            {
+              "name": "owner",
+              "value": "={{$json.event_type_uri}}"
+            },
+            {
+              "name": "owner_type",
+              "value": "EventType"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "create-scheduling-link",
+      "name": "Create Calendly Scheduling Link",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 3,
+      "position": [1450, 350]
+    },
+    {
+      "parameters": {
+        "functionCode": "// Generate fallback message with scheduling URL\nconst lead = $input.item.json;\n\nreturn {\n  json: {\n    lead_id: lead.lead_id,\n    lead_phone: lead.lead_phone,\n    message: `Hi ${lead.lead_name}, please book your solar consultation here: ${lead.scheduling_url}`,\n    scheduling_url: lead.scheduling_url\n  }\n};"
+      },
+      "id": "fallback-sms",
+      "name": "Prepare SMS Fallback",
+      "type": "n8n-nodes-base.function",
+      "typeVersion": 1,
+      "position": [1450, 550]
+    },
+    {
+      "parameters": {
+        "functionCode": "// Extract scheduling link from Calendly response\nconst schedulingLink = $input.item.json.resource?.booking_url;\nconst lead = $input.first().json;\n\nif (!schedulingLink) {\n  throw new Error('Failed to create scheduling link');\n}\n\nreturn {\n  json: {\n    lead_id: lead.lead_id,\n    lead_email: lead.lead_email,\n    lead_name: lead.lead_name,\n    scheduling_link: schedulingLink\n  }\n};"
+      },
+      "id": "extract-link",
+      "name": "Extract Scheduling Link",
+      "type": "n8n-nodes-base.function",
+      "typeVersion": 1,
+      "position": [1650, 350]
+    },
+    {
+      "parameters": {
+        "url": "={{$env.BACKEND_API_URL}}/api/leads/={{$json.lead_id}}/send-email",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "sendBody": true,
+        "bodyParameters": {
+          "parameters": [
+            {
+              "name": "type",
+              "value": "appointment_confirmation"
+            },
+            {
+              "name": "scheduling_link",
+              "value": "={{$json.scheduling_link}}"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "send-email-confirmation",
+      "name": "Send Email with Link",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 3,
+      "position": [1850, 350]
+    },
+    {
+      "parameters": {
+        "fromEmail": "={{$env.EMAIL_FROM}}",
+        "toEmail": "={{$json.lead_phone}}",
+        "subject": "Book your solar consultation",
+        "text": "={{$json.message}}",
+        "options": {}
+      },
+      "id": "send-sms-fallback",
+      "name": "Send SMS with Link",
+      "type": "n8n-nodes-base.twilio",
+      "typeVersion": 1,
+      "position": [1650, 550],
+      "credentials": {
+        "twilioApi": {
+          "id": "twilioCredentials",
+          "name": "Twilio Credentials"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "url": "={{$env.BACKEND_API_URL}}/api/leads/={{$json.lead_id}}",
+        "method": "PATCH",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "sendBody": true,
+        "bodyParameters": {
+          "parameters": [
+            {
+              "name": "status",
+              "value": "booked"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "update-lead-status",
+      "name": "Update Lead to Booked",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 3,
+      "position": [2050, 450]
+    },
+    {
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "={{$json}}"
+      },
+      "id": "webhook-response",
+      "name": "Webhook Response",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1,
+      "position": [2250, 450]
+    },
+    {
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "field": "hours",
+              "hoursInterval": 12
+            }
+          ]
+        }
+      },
+      "id": "reminder-cron",
+      "name": "Appointment Reminder Check",
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1,
+      "position": [250, 850]
+    },
+    {
+      "parameters": {
+        "url": "={{$env.BACKEND_API_URL}}/api/leads",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "sendQuery": true,
+        "queryParameters": {
+          "parameters": [
+            {
+              "name": "status",
+              "value": "booked"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "fetch-booked-leads",
+      "name": "Fetch Booked Leads",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 3,
+      "position": [450, 850]
+    },
+    {
+      "parameters": {
+        "functionCode": "// Filter leads with appointments in next 24 hours\nconst leads = $input.item.json.leads || [];\nconst now = new Date();\nconst tomorrow = new Date(now.getTime() + 24 * 60 * 60 * 1000);\nconst results = [];\n\nfor (const lead of leads) {\n  // Would need to fetch appointment details from backend\n  // For now, just return all booked leads for demonstration\n  results.push({\n    json: lead\n  });\n}\n\nreturn results;"
+      },
+      "id": "filter-reminders",
+      "name": "Filter Appointments for Reminders",
+      "type": "n8n-nodes-base.function",
+      "typeVersion": 1,
+      "position": [650, 850]
+    },
+    {
+      "parameters": {
+        "fromEmail": "={{$env.EMAIL_FROM}}",
+        "toEmail": "={{$json.phone}}",
+        "subject": "Reminder: Solar consultation tomorrow",
+        "text": "Hi {{$json.name}},\n\nThis is a reminder about your solar consultation scheduled for tomorrow.\n\nWe're excited to show you how much you can save!\n\n- SOLAI Team",
+        "options": {}
+      },
+      "id": "send-reminder-sms",
+      "name": "Send Reminder SMS",
+      "type": "n8n-nodes-base.twilio",
+      "typeVersion": 1,
+      "position": [850, 850],
+      "credentials": {
+        "twilioApi": {
+          "id": "twilioCredentials",
+          "name": "Twilio Credentials"
+        }
+      }
+    }
+  ],
+  "connections": {
+    "Booking Request Webhook": {
+      "main": [
+        [
+          {
+            "node": "Validate Request",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Validate Request": {
+      "main": [
+        [
+          {
+            "node": "Fetch Lead Details",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Fetch Lead Details": {
+      "main": [
+        [
+          {
+            "node": "Fetch Calendly Event Types",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Fetch Calendly Event Types": {
+      "main": [
+        [
+          {
+            "node": "Prepare Booking Data",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Prepare Booking Data": {
+      "main": [
+        [
+          {
+            "node": "Has Email?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Has Email?": {
+      "main": [
+        [
+          {
+            "node": "Create Calendly Scheduling Link",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Prepare SMS Fallback",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Create Calendly Scheduling Link": {
+      "main": [
+        [
+          {
+            "node": "Extract Scheduling Link",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Extract Scheduling Link": {
+      "main": [
+        [
+          {
+            "node": "Send Email with Link",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Send Email with Link": {
+      "main": [
+        [
+          {
+            "node": "Update Lead to Booked",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Prepare SMS Fallback": {
+      "main": [
+        [
+          {
+            "node": "Send SMS with Link",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Send SMS with Link": {
+      "main": [
+        [
+          {
+            "node": "Update Lead to Booked",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Update Lead to Booked": {
+      "main": [
+        [
+          {
+            "node": "Webhook Response",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Appointment Reminder Check": {
+      "main": [
+        [
+          {
+            "node": "Fetch Booked Leads",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Fetch Booked Leads": {
+      "main": [
+        [
+          {
+            "node": "Filter Appointments for Reminders",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Filter Appointments for Reminders": {
+      "main": [
+        [
+          {
+            "node": "Send Reminder SMS",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "settings": {
+    "saveDataErrorExecution": "all",
+    "saveDataSuccessExecution": "all",
+    "saveManualExecutions": true
+  },
+  "tags": ["solarLEADmax", "appointments", "booking"]
+}
