@@ -1,0 +1,35 @@
+{
+  "name": "solarleadmax",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Solar Lead AI Qualification & Appointment Setting System",
+  "workspaces": [
+    "backend",
+    "frontend"
+  ],
+  "engines": {
+    "node": ">=24.3.0",
+    "npm": ">=11.4.2"
+  },
+  "scripts": {
+    "lint": "eslint .",
+    "format": "prettier --write .",
+    "typecheck": "tsc -b backend frontend",
+    "postinstall": "npm run -w backend prisma:generate",
+    "dev:backend": "npm run -w backend dev",
+    "dev:frontend": "npm run -w frontend dev",
+    "dev:worker": "npm run -w backend worker",
+    "build:backend": "npm run -w backend build",
+    "build:frontend": "npm run -w frontend build",
+    "test:backend": "npm run -w backend test"
+  },
+  "keywords": [
+    "solar",
+    "lead-generation",
+    "ai",
+    "qualification",
+    "automation"
+  ],
+  "author": "solarLEADmax Team",
+  "license": "MIT"
+}

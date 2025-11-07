@@ -1,0 +1,88 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum LeadStatus {
+  new
+  contacted
+  qualified
+  appointment_set
+  showed
+  no_show
+  dead
+}
+
+enum Channel {
+  sms
+  email
+  voice
+}
+
+enum Direction {
+  inbound
+  outbound
+}
+
+enum ApptStatus {
+  scheduled
+  confirmed
+  completed
+  no_show
+  cancelled
+}
+
+model Lead {
+  id               String     @id @default(uuid())
+  name             String
+  phone            String?    @unique
+  email            String?    @unique
+  address          String
+  source           String
+  status           LeadStatus @default(new)
+  homeowner        Boolean?   @default(false)
+  monthly_bill     Int?
+  timeline         String?
+  interest_score   Int?       @db.SmallInt
+  last_contact     DateTime?
+  contact_attempts Int        @default(0)
+  created_at       DateTime   @default(now())
+  updated_at       DateTime   @updatedAt
+
+  conversations Conversation[]
+  appointments  Appointment[]
+
+  @@index([status])
+  @@index([created_at])
+}
+
+model Conversation {
+  id           String    @id @default(uuid())
+  lead_id      String
+  lead         Lead      @relation(fields: [lead_id], references: [id], onDelete: Cascade)
+  channel      Channel
+  direction    Direction
+  message      String
+  ai_processed Boolean   @default(false)
+  created_at   DateTime  @default(now())
+
+  @@index([lead_id, created_at])
+}
+
+model Appointment {
+  id                String     @id @default(uuid())
+  lead_id           String
+  lead              Lead       @relation(fields: [lead_id], references: [id], onDelete: Cascade)
+  calendly_event_id String?
+  scheduled_at      DateTime?
+  status            ApptStatus @default(scheduled)
+  reminder_sent     Boolean    @default(false)
+  created_at        DateTime   @default(now())
+
+  @@index([lead_id])
+  @@index([status])
+}
