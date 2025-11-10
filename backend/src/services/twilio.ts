@@ -68,5 +68,3 @@ export async function initiateHotLeadCall(leadId: string) {
     true
   );
 }
-  await sendSms(lead.phone, msg);
-}
