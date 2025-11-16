@@ -12,3 +12,9 @@ export const leadApi = {
   create: (data: any) => api.post('/leads/intake', data).then(r => r.data),
   update: (id: string, data: any) => api.patch(`/leads/${id}`, data).then(r => r.data),
 }
+
+export const demoApi = {
+  createLead: (data: { name: string; phone: string; email?: string }) =>
+    api.post('/demo/onboarding', data).then(r => r.data),
+  ping: () => api.get('/demo/ping').then(r => r.data),
+}

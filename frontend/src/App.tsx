@@ -5,13 +5,22 @@ import LeadDetail from './pages/LeadDetail'
 
 function NavBar() {
   const { pathname } = useLocation()
-  const active = (path: string) => pathname === path ? 'text-blue-600' : 'text-gray-600'
+  const active = (path: string) => 
+    pathname === path 
+      ? 'text-white font-semibold' 
+      : 'text-white/80 hover:text-white'
+  
   return (
-    <nav className="border-b bg-white/70 backdrop-blur sticky top-0 z-10">
-      <div className="max-w-6xl mx-auto px-4 py-3 flex items-center gap-6">
-        <div className="font-semibold">solarLEADmax</div>
-        <Link className={`hover:text-blue-600 ${active('/')}`} to="/">Dashboard</Link>
-        <Link className={`hover:text-blue-600 ${active('/leads')}`} to="/leads">Leads</Link>
+    <nav className="bg-gradient-to-r from-purple-600 to-indigo-600 sticky top-0 z-10 shadow-lg">
+      <div className="max-w-7xl mx-auto px-6 py-4 flex items-center gap-8">
+        <div className="flex items-center gap-2">
+          <span className="text-2xl">🌞</span>
+          <span className="font-bold text-white text-xl">solarLEADmax</span>
+        </div>
+        <div className="flex gap-6 ml-auto">
+          <Link className={`transition-colors ${active('/')}`} to="/">Dashboard</Link>
+          <Link className={`transition-colors ${active('/leads')}`} to="/leads">Leads</Link>
+        </div>
       </div>
     </nav>
   )
@@ -19,9 +28,9 @@ function NavBar() {
 
 export default function App() {
   return (
-    <div className="min-h-screen">
+    <div className="min-h-screen bg-gradient-to-br from-purple-50 via-white to-indigo-50">
       <NavBar />
-      <main className="max-w-6xl mx-auto px-4 py-6">
+      <main className="max-w-7xl mx-auto px-6 py-8">
         <Routes>
           <Route path="/" element={<Dashboard />} />
           <Route path="/leads" element={<LeadsList />} />
