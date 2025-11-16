@@ -50,6 +50,11 @@ prisma/migrations/**/migration.sql.bak
 
 # OS
 Thumbs.db
+._*
+.AppleDouble
+.LSOverride
+.Spotlight-V100
+.Trashes
 
 # Logs
 logs
