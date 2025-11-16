@@ -1,0 +1,280 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Solar SMS A2P Onboarding</title>
+    <style>
+      body { font-family: system-ui, -apple-system, Segoe UI, Roboto, sans-serif; line-height: 1.4; margin: 0; }
+      header { background: #0f172a; color: #fff; padding: 16px 20px; }
+      main { max-width: 960px; margin: 0 auto; padding: 20px; }
+      fieldset { border: 1px solid #e5e7eb; border-radius: 8px; padding: 16px; margin-bottom: 16px; }
+      legend { padding: 0 6px; font-weight: 600; }
+      .row { display: grid; grid-template-columns: repeat(12, 1fr); gap: 12px; }
+      .col-6 { grid-column: span 6; }
+      .col-12 { grid-column: span 12; }
+      label { display: block; font-size: 14px; color: #111827; margin: 8px 0 4px; }
+      input, textarea { width: 100%; padding: 10px; border: 1px solid #d1d5db; border-radius: 6px; font-size: 14px; }
+      textarea { min-height: 80px; }
+      small { color: #6b7280; }
+      button { background: #2563eb; color: #fff; border: 0; border-radius: 8px; padding: 12px 16px; font-weight: 600; cursor: pointer; }
+      button:disabled { background: #9ca3af; cursor: not-allowed; }
+      .success { background: #ecfdf5; border: 1px solid #10b981; color: #065f46; padding: 12px; border-radius: 8px; margin-bottom: 12px; display: none; }
+      .error { background: #fef2f2; border: 1px solid #ef4444; color: #7f1d1d; padding: 12px; border-radius: 8px; margin-bottom: 12px; display: none; }
+    </style>
+  </head>
+  <body>
+    <header>
+      <h1>Solar SMS A2P Onboarding</h1>
+    </header>
+    <main>
+      <p>Fill out the form below to provide the information needed for SMS A2P registration and onboarding.</p>
+      <div id="success" class="success">Thank you! We received your submission.</div>
+      <div id="error" class="error">There was an error submitting the form. Please check your entries.</div>
+
+      <form id="onboardingForm">
+        <fieldset>
+          <legend>1) Company and Contacts</legend>
+          <div class="row">
+            <div class="col-6">
+              <label>Legal Business Name</label>
+              <input name="brand.legalName" required />
+            </div>
+            <div class="col-6">
+              <label>DBA (optional)</label>
+              <input name="brand.dba" />
+            </div>
+            <div class="col-6">
+              <label>EIN/Tax ID</label>
+              <input name="brand.taxId" required />
+            </div>
+            <div class="col-6">
+              <label>Registration Country</label>
+              <input name="brand.registrationCountry" value="US" required />
+            </div>
+            <div class="col-6">
+              <label>Business Type</label>
+              <input name="brand.businessType" placeholder="LLC/Corp/Sole Prop/Nonprofit/Other" required />
+            </div>
+            <div class="col-6">
+              <label>Industry</label>
+              <input name="brand.industry" value="Energy/Solar" required />
+            </div>
+            <div class="col-12">
+              <label>Website URL</label>
+              <input name="brand.website" type="url" required />
+            </div>
+            <div class="col-6">
+              <label>Support Email</label>
+              <input name="brand.supportEmail" type="email" required />
+            </div>
+            <div class="col-6">
+              <label>Support Phone</label>
+              <input name="brand.supportPhone" required />
+            </div>
+          </div>
+          <div class="row">
+            <div class="col-6">
+              <label>Address Line 1</label>
+              <input name="brand.address.line1" required />
+            </div>
+            <div class="col-6">
+              <label>Address Line 2</label>
+              <input name="brand.address.line2" />
+            </div>
+            <div class="col-4">
+              <label>City</label>
+              <input name="brand.address.city" required />
+            </div>
+            <div class="col-4">
+              <label>State</label>
+              <input name="brand.address.state" required />
+            </div>
+            <div class="col-4">
+              <label>Postal Code</label>
+              <input name="brand.address.postalCode" required />
+            </div>
+          </div>
+          <div class="row">
+            <div class="col-6">
+              <label>Representative Name</label>
+              <input name="representative.name" required />
+            </div>
+            <div class="col-6">
+              <label>Title/Role</label>
+              <input name="representative.title" required />
+            </div>
+            <div class="col-6">
+              <label>Work Email</label>
+              <input name="representative.email" type="email" required />
+            </div>
+            <div class="col-6">
+              <label>Phone</label>
+              <input name="representative.phone" required />
+            </div>
+          </div>
+        </fieldset>
+
+        <fieldset>
+          <legend>2) Messaging Program</legend>
+          <div class="row">
+            <div class="col-6">
+              <label>Use Case</label>
+              <input name="messaging.useCase" placeholder="conversational | marketing | low_volume_mixed" required />
+            </div>
+            <div class="col-6">
+              <label>Terms URL</label>
+              <input name="messaging.termsUrl" type="url" required />
+            </div>
+            <div class="col-6">
+              <label>Privacy URL</label>
+              <input name="messaging.privacyUrl" type="url" required />
+            </div>
+            <div class="col-6">
+              <label>Frequency Statement</label>
+              <input name="messaging.optIn.frequency" placeholder="Up to 5 msgs/lead over 14 days" required />
+            </div>
+            <div class="col-12">
+              <label>Program Description</label>
+              <textarea name="messaging.description" required>Two‑way lead qualification and appointment scheduling for residential solar prospects who opt‑in via web or instant forms. Messages include appointment logistics, reminders, and qualification questions.</textarea>
+            </div>
+            <div class="col-12">
+              <label>Opt‑in Form URL(s) (comma‑separated)</label>
+              <input name="messaging.optIn.formUrlsCsv" placeholder="https://example.com/form1, https://example.com/form2" required />
+              <small>Paste one or more URLs separated by commas</small>
+            </div>
+            <div class="col-12">
+              <label>Opt‑in Screenshots Link(s) (comma‑separated)</label>
+              <input name="messaging.optIn.screenshotsLinksCsv" placeholder="https://drive.google.com/..." />
+            </div>
+            <div class="col-12">
+              <label>Consent Language (exact text shown near submit)</label>
+              <textarea name="messaging.optIn.disclosureText" required>By submitting, you agree to receive SMS from [Brand] about your solar inquiry. Msg & data rates may apply. Frequency up to 5 msgs over 14 days. Reply STOP to opt out, HELP for help. See our Terms [link] and Privacy [link].</textarea>
+            </div>
+            <div class="col-12">
+              <label>Sample Messages (one per line)</label>
+              <textarea name="messaging.sampleMessages" required>Hi {FirstName}, it’s {Brand}. Got your solar inquiry—what’s your average electric bill? Reply STOP to opt out.
+Thanks! Based on your address we service your area. Can we book a 20‑min consult this week? Reply STOP to opt out.
+Appointment confirmed for {Date/Time}. Reply HELP for support or STOP to opt out.</textarea>
+            </div>
+          </div>
+        </fieldset>
+
+        <fieldset>
+          <legend>3) Compliance</legend>
+          <div class="row">
+            <div class="col-6">
+              <label>Quiet Hours (optional)</label>
+              <input name="compliance.quietHours" placeholder="No sends 9pm–8am local" />
+            </div>
+            <div class="col-6">
+              <label>DNC Suppression Process</label>
+              <input name="compliance.dncSuppressionProcess" required />
+            </div>
+            <div class="col-12">
+              <label>Prohibited Content Policy</label>
+              <input name="compliance.prohibitedContentPolicy" value="No SHAFT, no guaranteed savings, no tax/legal advice." required />
+            </div>
+          </div>
+        </fieldset>
+
+        <fieldset>
+          <legend>4) Numbers & Volume</legend>
+          <div class="row">
+            <div class="col-6">
+              <label>Sender Numbers (comma‑separated)</label>
+              <input name="numbers.senderNumbersCsv" placeholder="+15551234567, +15557654321" />
+            </div>
+            <div class="col-6">
+              <label>Area Code Preferences (comma‑separated)</label>
+              <input name="numbers.areaPreferencesCsv" placeholder="415, 628" />
+            </div>
+            <div class="col-6">
+              <label>Expected Daily Volume</label>
+              <input name="numbers.expectedDaily" type="number" min="0" value="0" required />
+            </div>
+            <div class="col-6">
+              <label>Expected Monthly Volume</label>
+              <input name="numbers.expectedMonthly" type="number" min="0" value="0" required />
+            </div>
+          </div>
+        </fieldset>
+
+        <button type="submit">Submit</button>
+      </form>
+
+      <script>
+        function get(obj, path, def) {
+          return path.split('.').reduce((o, k) => (o || {})[k], obj) ?? def;
+        }
+        function set(obj, path, value) {
+          const parts = path.split('.');
+          let cur = obj;
+          for (let i = 0; i < parts.length - 1; i++) {
+            cur[parts[i]] = cur[parts[i]] || {};
+            cur = cur[parts[i]];
+          }
+          cur[parts[parts.length - 1]] = value;
+          return obj;
+        }
+
+        document.getElementById('onboardingForm').addEventListener('submit', async (e) => {
+          e.preventDefault();
+          const form = e.target;
+          const data = {
+            brand: { address: { country: 'US' } },
+            messaging: { optIn: {}, stopKeywords: ["STOP","STOP ALL","UNSUBSCRIBE","CANCEL","END","QUIT"], helpKeywords: ["HELP"] },
+            compliance: {},
+            numbers: {}
+          };
+
+          const controls = form.querySelectorAll('input, textarea');
+          controls.forEach((el) => {
+            const name = el.name;
+            if (!name) return;
+            let val = el.value?.trim();
+            if (name.endsWith('Csv')) {
+              const target = name.replace(/Csv$/, '');
+              const arr = val ? val.split(',').map(s => s.trim()).filter(Boolean) : [];
+              set(data, target, arr);
+            } else if (el.type === 'number') {
+              const num = Number(val);
+              set(data, name, Number.isFinite(num) ? num : 0);
+            } else {
+              set(data, name, val);
+            }
+          });
+
+          // Derive arrays
+          if (data.messaging && typeof data.messaging.sampleMessages === 'string') {
+            data.messaging.sampleMessages = data.messaging.sampleMessages.split('\n').map(s => s.trim()).filter(Boolean);
+          }
+          if (data.messaging?.optIn?.formUrlsCsv) delete data.messaging.optIn.formUrlsCsv;
+          if (data.messaging?.optIn?.screenshotsLinksCsv) delete data.messaging.optIn.screenshotsLinksCsv;
+          if (data.numbers?.senderNumbersCsv) delete data.numbers.senderNumbersCsv;
+          if (data.numbers?.areaPreferencesCsv) delete data.numbers.areaPreferencesCsv;
+
+          const btn = form.querySelector('button[type="submit"]');
+          btn.disabled = true;
+          document.getElementById('success').style.display = 'none';
+          document.getElementById('error').style.display = 'none';
+
+          try {
+            const res = await fetch('/api/onboarding', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify(data),
+            });
+            if (!res.ok) throw new Error('Bad response');
+            document.getElementById('success').style.display = 'block';
+            form.reset();
+          } catch (err) {
+            document.getElementById('error').style.display = 'block';
+          } finally {
+            btn.disabled = false;
+          }
+        });
+      </script>
+    </main>
+  </body>
+</html>

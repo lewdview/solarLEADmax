@@ -1,0 +1,135 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>SolarLEADmax — Progress Update</title>
+    <style>
+      :root {
+        --brand: #0f172a; /* slate-900 */
+        --accent: #2563eb; /* blue-600 */
+        --text: #111827; /* gray-900 */
+        --muted: #6b7280; /* gray-500 */
+        --border: #e5e7eb; /* gray-200 */
+      }
+      * { box-sizing: border-box; }
+      body { font-family: system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif; color: var(--text); margin: 0; }
+      header { background: var(--brand); color: #fff; padding: 20px 24px; }
+      header h1 { margin: 0; font-size: 22px; letter-spacing: 0.2px; }
+      main { max-width: 900px; margin: 0 auto; padding: 24px; }
+      .meta { display: flex; flex-wrap: wrap; gap: 12px 24px; margin: 8px 0 16px; color: var(--muted); font-size: 14px; }
+      .btn-print { background: var(--accent); color: #fff; border: 0; padding: 8px 12px; border-radius: 8px; font-weight: 600; cursor: pointer; float: right; }
+      section { border: 1px solid var(--border); border-radius: 8px; padding: 14px 16px; margin-bottom: 12px; }
+      h2 { font-size: 16px; margin: 0 0 8px; color: var(--brand); }
+      ul { margin: 6px 0 0 18px; }
+      li { margin: 4px 0; }
+      .columns { display: grid; grid-template-columns: repeat(12, 1fr); gap: 14px; }
+      .col-6 { grid-column: span 6; }
+      .tag { display: inline-block; padding: 2px 8px; border-radius: 999px; font-size: 12px; border: 1px solid var(--border); color: var(--muted); }
+      footer { color: var(--muted); font-size: 12px; text-align: center; padding: 16px 24px 32px; }
+      @media print {
+        .btn-print { display: none; }
+        section { break-inside: avoid; }
+        body { padding: 0; }
+        header, main { box-shadow: none; }
+      }
+    </style>
+  </head>
+  <body>
+    <header>
+      <h1>SolarLEADmax — Progress Update</h1>
+    </header>
+    <main>
+      <button class="btn-print" onclick="window.print()">Print to PDF</button>
+      <div class="meta">
+        <div><strong>Date:</strong> <span id="date"></span></div>
+        <div><strong>Status:</strong> Active</div>
+        <div><strong>Prepared for:</strong> <span id="client">Your Team</span></div>
+      </div>
+
+      <section>
+        <h2>Summary</h2>
+        <p>Core backend, lead intake, SMS handling, and AI qualification engine are in place. A client onboarding web form is live to collect A2P/brand details for SMS approval.</p>
+      </section>
+
+      <section>
+        <h2>Completed</h2>
+        <ul>
+          <li><strong>Backend API & Worker:</strong> Express API with security middleware, CORS, rate limiting, request logging; background queues for initial contact and AI processing.</li>
+          <li><strong>Data Model:</strong> Leads, Conversations, Appointments (Prisma).</li>
+          <li><strong>Lead Intake:</strong> Validated endpoint with Twilio Phone Lookup, dedupe, and workflow kick-off.</li>
+          <li><strong>SMS/Voice (Twilio):</strong> Inbound SMS webhook with STOP handling, outbound SMS utility, hot-lead outbound call scaffold with TwiML.</li>
+          <li><strong>AI Assistant (OpenAI):</strong> Conversation engine with function calling (qualify, book, disqualify), updates lead and replies via SMS.</li>
+          <li><strong>Client Onboarding Form:</strong> Public web form for A2P/brand details; server-side validation in place.</li>
+        </ul>
+      </section>
+
+      <div class="columns">
+        <section class="col-6">
+          <h2>In Progress</h2>
+          <ul>
+            <li>Calendly wiring for appointment creation + confirmations.</li>
+            <li>Reminder workflow and re-engagement cadence.</li>
+            <li>AI prompt tuning and escalation rules.</li>
+            <li>Persisting onboarding submissions (DB) and export (Notion/CSV).</li>
+          </ul>
+        </section>
+        <section class="col-6">
+          <h2>Next 3–5 Days</h2>
+          <ul>
+            <li>Store onboarding submissions in DB; CSV + Notion export.</li>
+            <li>Submit A2P 10DLC brand/campaign (pending client inputs).</li>
+            <li>Finalize HELP auto-reply and opt-out confirmations.</li>
+            <li>Staging deploy with secure form and webhook URLs.</li>
+          </ul>
+        </section>
+      </div>
+
+      <section>
+        <h2>Client Action Needed</h2>
+        <ul>
+          <li>Legal name, EIN/Tax ID, website, physical address, support email/phone, representative name/title/email/phone.</li>
+          <li>Opt-in evidence: lead form URLs + screenshots; Terms & Privacy URLs; frequency statement.</li>
+          <li>Sample messages (3–5) including brand + STOP/HELP; expected daily/monthly volumes; preferred area codes or numbers.</li>
+          <li>Calendly org link and event types (durations, buffers); API key or access.</li>
+          <li>Approve consent text (compliant template prepared).</li>
+        </ul>
+      </section>
+
+      <div class="columns">
+        <section class="col-6">
+          <h2>Risks & Mitigations</h2>
+          <ul>
+            <li><strong>A2P approval time:</strong> Mitigated via complete opt-in evidence and compliant samples.</li>
+            <li><strong>Opt-in gaps:</strong> Use provided consent template to avoid delays.</li>
+            <li><strong>Public webhooks:</strong> Staging will supply URLs for Twilio/Calendly.</li>
+          </ul>
+        </section>
+        <section class="col-6">
+          <h2>Post-Deploy KPIs</h2>
+          <ul>
+            <li>Lead volume & source mix</li>
+            <li>First-response time</li>
+            <li>AI engagement & qualification rate</li>
+            <li>Appointment rate</li>
+            <li>Opt-out rate & deliverability</li>
+          </ul>
+        </section>
+      </div>
+
+      <footer>
+        SolarLEADmax — AI Lead Qualification & Appointment Setting for Solar
+      </footer>
+    </main>
+
+    <script>
+      const d = new Date();
+      const opts = { year: 'numeric', month: 'short', day: '2-digit' };
+      document.getElementById('date').textContent = d.toLocaleDateString(undefined, opts);
+      // Optionally set client name via query string: ?client=Acme%20Solar
+      const qs = new URLSearchParams(location.search);
+      const client = qs.get('client');
+      if (client) document.getElementById('client').textContent = client;
+    </script>
+  </body>
+</html>

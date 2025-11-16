@@ -3,6 +3,8 @@ import express from "express";
 import helmet from "helmet";
 import cors from "cors";
 import rateLimit from "express-rate-limit";
+import path from "path";
+import { fileURLToPath } from "url";
 import { requestLogger } from "./middleware/requestLogger.js";
 import { securityMiddleware } from "./middleware/security.js";
 import { errorHandler } from "./middleware/errorHandler.js";
@@ -19,6 +21,22 @@ app.use(cors({ origin: env.CORS_ORIGIN.split(","), credentials: true }));
 app.use(rateLimit({ windowMs: 15 * 60 * 1000, max: 100 }));
 app.use(securityMiddleware);
 app.use(requestLogger);
+
+// Serve static onboarding form (and any other static assets) from backend/public
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
+// Resolve to backend/public regardless of dev or build output location
+const publicDir = path.resolve(process.cwd(), "public");
+app.use(express.static(publicDir));
+
+// Friendly route to serve the form at /onboarding
+app.get("/onboarding", (_req, res) => {
+  res.sendFile(path.join(publicDir, "onboarding.html"));
+});
+// Friendly route to serve the progress one-pager at /progress
+app.get("/progress", (_req, res) => {
+  res.sendFile(path.join(publicDir, "progress.html"));
+});
 
 app.use("/api", routes);
 
