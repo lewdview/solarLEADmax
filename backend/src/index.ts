@@ -37,6 +37,10 @@ app.get("/onboarding", (_req, res) => {
 app.get("/progress", (_req, res) => {
   res.sendFile(path.join(publicDir, "progress.html"));
 });
+// Friendly route to serve the demo page at /demo
+app.get("/demo", (_req, res) => {
+  res.sendFile(path.join(publicDir, "demo", "index.html"));
+});
 
 app.use("/api", routes);
 
